@@ -1,0 +1,254 @@
+model players {
+  playerID                  String                      @id @default(cuid())
+  name                      String
+  tgID                      String
+  tgFirstName               String
+  tgLastName                String
+  tgUsername                String
+  tgPhotoUrl                String
+  userLanguage              String
+  registrationIp            String
+  agent                     agents                      @relation(fields: [agentID], references: [agentID])
+  agentID                   Int
+  cdate                     DateTime
+  udate                     DateTime
+  enabled                   Boolean
+  registrationDate          String
+  player_login_logs         player_login_logs[]
+  current_active_players    current_active_players[]
+  game_history              game_history[]
+  manual_adjustments        manual_adjustments[]
+  player_wallets            player_wallets[]
+  wallet_requests           wallet_requests[]
+  deposit_transactions      deposit_transactions[]
+  withdrawal_transactions   withdrawal_transactions[]
+  transfer_in_transactions  transfer_in_transactions[]
+  transfer_out_transactions transfer_out_transactions[]
+}
+
+model admins {
+  adminID            Int                  @id @default(autoincrement())
+  adminName          String
+  adminPassword      String
+  admin_roles        admin_roles          @relation(fields: [adminRoleID], references: [adminRoleID])
+  adminRoleID        Int
+  createdBy          String
+  cdate              DateTime
+  udate              DateTime
+  enabled            Boolean
+  admin_login_logs   admin_login_logs[]
+  manual_adjustments manual_adjustments[]
+}
+
+model admin_roles {
+  adminRoleID         Int                   @id @default(autoincrement())
+  adminRoleName       String
+  enabled             Boolean
+  admins              admins[]
+  admin_role_accesses admin_role_accesses[]
+}
+
+model admin_accesses {
+  adminAccessID       Int                   @id @default(autoincrement())
+  accessName          String
+  admin_role_accesses admin_role_accesses[]
+}
+
+model admin_role_accesses {
+  admin_roles    admin_roles    @relation(fields: [adminRoleID], references: [adminRoleID])
+  adminRoleID    Int            @id
+  admin_accesses admin_accesses @relation(fields: [adminAccessID], references: [adminAccessID])
+  adminAccessID  Int
+}
+
+model agents {
+  agentID       Int             @id @default(autoincrement())
+  agentName     String
+  agentPassword String
+  parentAgentID Int?
+  createdBy     String
+  cdate         DateTime
+  udate         DateTime
+  enabled       Boolean
+  players       players[]
+  agent_rebates agent_rebates[]
+}
+
+model agent_rebates {
+  agentRebateID Int      @id @default(autoincrement())
+  agents        agents   @relation(fields: [agentID], references: [agentID])
+  agentID       Int
+  gameID        Int
+  rebate        Float
+  createdBy     String
+  fromDate      DateTime
+  thruDate      DateTime
+  isActive      Boolean
+}
+
+model player_login_logs {
+  players   players  @relation(fields: [playerID], references: [playerID])
+  playerID  String   @id
+  ip        String
+  loginTime DateTime
+}
+
+model admin_login_logs {
+  admins    admins   @relation(fields: [adminID], references: [adminID])
+  adminID   Int      @id
+  ip        String
+  loginTime DateTime
+}
+
+model current_active_players {
+  players        players  @relation(fields: [playerID], references: [playerID])
+  playerID       String   @id
+  lastActiveTime DateTime
+}
+
+model game_history {
+  gameHistoryID   Int            @id @default(autoincrement())
+  gameID          String
+  players         players        @relation(fields: [playerID], references: [playerID])
+  playerID        String
+  iGamedesc       String
+  betAmount       Float
+  winAmount       Float
+  transactionDate String
+  cdate           DateTime
+  game_rebates    game_rebates[]
+}
+
+model game_rebates {
+  game_history       game_history @relation(fields: [gameHistoryID], references: [gameHistoryID])
+  gameHistoryID      Int
+  merchantID         Int
+  gameID             Int          @id
+  category           String
+  effectiveBetAmount Float
+  rebateAmount       Float
+  status             String
+  cdate              DateTime
+}
+
+model manual_adjustments {
+  manualAdjustmentID Int      @id @default(autoincrement())
+  players            players  @relation(fields: [playerID], references: [playerID])
+  playerID           String
+  reason             String
+  amount             Float
+  admins             admins   @relation(fields: [createdBy], references: [adminID])
+  createdBy          Int
+  cdate              DateTime
+}
+
+model all_ow_requests {
+  allOwRequestID Int      @id @default(autoincrement())
+  request        String
+  cdate          DateTime
+}
+
+model player_wallets {
+  playerWalletID Int      @id @default(autoincrement())
+  players        players  @relation(fields: [playerID], references: [playerID])
+  playerID       String
+  currency       String
+  amount         Float
+  frozenAmount   Float
+  cdate          DateTime
+  udate          DateTime
+}
+
+model wallet_requests {
+  walletRequestID    Int     @id @default(autoincrement())
+  tID                String
+  type               String
+  players            players @relation(fields: [playerID], references: [playerID])
+  playerID           String
+  currency           String
+  amount             String
+  iGameID            String
+  iExtparam          String
+  iRollback          String
+  iGamedesc          String
+  iActionID          String
+  iReferenceActionID String
+  roundStart         Boolean
+  roundEnded         Boolean
+  gameExtra          String
+  subtype            String
+  jackpotWin         Int
+  hmac               String
+  response           String
+}
+
+model admin_bank_accounts {
+  adminBankAccountID      Int                       @id @default(autoincrement())
+  bankName                String
+  accountNumber           String
+  holderName              String
+  enabled                 Boolean
+  method                  String
+  deposit_transactions    deposit_transactions[]
+  withdrawal_transactions withdrawal_transactions[]
+}
+
+model deposit_transactions {
+  depositTransactionID Int                 @id @default(autoincrement())
+  players              players             @relation(fields: [playerID], references: [playerID])
+  playerID             String
+  amount               Float
+  currency             String
+  requestTime          DateTime
+  processTime          DateTime
+  processedBy          String
+  transactionDate      String
+  status               String
+  admin_bank_accounts  admin_bank_accounts @relation(fields: [adminBankAccountID], references: [adminBankAccountID])
+  adminBankAccountID   Int
+}
+
+model withdrawal_transactions {
+  withdrawalTransactionID Int                 @id @default(autoincrement())
+  players                 players             @relation(fields: [playerID], references: [playerID])
+  playerID                String
+  amount                  Float
+  currency                String
+  requestTime             DateTime
+  processTime             DateTime
+  processedBy             String
+  transactionDate         String
+  status                  String
+  admin_bank_accounts     admin_bank_accounts @relation(fields: [adminBankAccountID], references: [adminBankAccountID])
+  adminBankAccountID      Int
+}
+
+model transfer_in_transactions {
+  transferInTransactionID Int      @id @default(autoincrement())
+  players                 players  @relation(fields: [playerID], references: [playerID])
+  playerID                String
+  amount                  Float
+  currency                String
+  requestTime             DateTime
+  processTime             DateTime
+  processedBy             String
+  transactionDate         String
+  status                  String
+  counterpartPlatform     String
+  counterpartUsername     String
+}
+
+model transfer_out_transactions {
+  transferOutTransactionID Int      @id @default(autoincrement())
+  players                  players  @relation(fields: [playerID], references: [playerID])
+  playerID                 String
+  amount                   Float
+  currency                 String
+  requestTime              DateTime
+  processTime              DateTime
+  processedBy              String
+  transactionDate          String
+  status                   String
+  counterpartPlatform      String
+  counterpartUsername      String
+}
